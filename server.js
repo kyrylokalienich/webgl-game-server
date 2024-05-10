@@ -8,15 +8,11 @@ const bodyParser = require('body-parser');
 require('dotenv').config()
 
 const HOOK_PATH = process.env.HOOK_PATH || "hook";
-
-const gameName = "panelki";
-const rules = `aa`
-const gameUrlGithub = "https://kyrylokalienich.github.io/test-webgl2only/";
+const gameName = "ENTER YOUR SHORT GAME NAME HERE";
 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }))
-
 app.use(bodyParser.json())
 
 // Use the whole root as static files to be able to serve the html file and
@@ -30,8 +26,6 @@ app.use(express.static(path.join(__dirname, '/'), {
     }
 }));
 
-
-
 app.use((req, res, next) => {
     const secret = req.get('X-Telegram-Bot-Api-Secret-Token');
 
@@ -44,6 +38,11 @@ app.use((req, res, next) => {
 
 const bot = new Telegraf(process.env.BOT_TOKEN, {
     telegram: { webhookReply: true },
+});
+
+bot.on(message('text'), async (ctx) => {
+    console.log('#msg');
+    bot.telegram.sendGame(ctx.chat.id, gameName);
 });
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
@@ -64,20 +63,6 @@ if (process.env.NODE_ENV === 'development') {
             bot.handleUpdate(req.body, res);
         })
 
-        bot.on(message('text'), async (ctx) => {
-            console.log('#msg');
-            bot.telegram.sendGame(ctx.chat.id, gameName);
-
-            /* await ctx.reply(rules, Markup.inlineKeyboard([
-                {
-                    text: "🤟Let's play🤟!!!",
-                    web_app: {
-                        url:url
-                    },
-                },
-                { text: "Open in browser", url: url, try_instant_view:true } ])); */
-        });
-
         bot.gameQuery((ctx) => ctx.answerGameQuery(url));
         bot.launch();
 
@@ -93,22 +78,9 @@ if (process.env.NODE_ENV === 'development') {
         bot.handleUpdate(req.body, res);
     })
 
-    bot.on(message('text'), async (ctx) => {
-        console.log('#msg-else')
-        await ctx.reply(rules, Markup.inlineKeyboard([{
-            text: "🤟Let's play🤟!!!",
-            web_app: {
-                url: process.env.APP_ENDPOINT
-            },
-        },
-        {text: "Open in browser", url: process.env.APP_ENDPOINT, try_instant_view:true}]
-        ));
-    });
+    bot.gameQuery((ctx) => ctx.answerGameQuery(process.env.APP_ENDPOINT));
+    bot.launch();
 }
-
-
-
-
 
 app.listen(process.env.PORT, () => {
     console.log(`Server running at http://localhost:${process.env.PORT}/`);
